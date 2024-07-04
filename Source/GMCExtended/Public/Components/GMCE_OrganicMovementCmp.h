@@ -542,6 +542,7 @@ public:
 
 	// GMC Override
 	virtual void UpdateImmersionDepth() override;
+	virtual float Swim(const FVector& LocationDelta, FHitResult& Hit, FGMC_FloorParams& Floor, float DeltaSeconds) override;
 
 	/// ComputeImmersionDepth() value will be returned if not overridden.
 	/// Always supersedes ComputeImmersionDepth() when called by UpdateImmersionDepth().
@@ -549,9 +550,23 @@ public:
 	/// Replace with custom logic on how immerse the pawn should be. Range is from 0 (not in fluid) to 1 (fully immersed). 
 	///
 	/// @returns      float    The current immersion depth.
-	UFUNCTION(BlueprintNativeEvent, Category = "Buoyancy Extended")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Buoyancy Extended")
 	float ComputeCustomImmersionDepth();
 	virtual float ComputeCustomImmersionDepth_Implementation();
+
+	/// FindWaterLine() value will be returned if not overridden.
+	/// Always supersedes FindWaterLine() when called by Swim().
+	/// 
+	/// Determines the location of the water line. Respects the current movement state meaning the resulting position will be adjusted slightly towards the pawn's
+	/// current physics volume.
+	///
+	/// @param        LocationInWater       The location of the pawn inside the fluid volume.
+	/// @param        LocationOutOfWater    The location of the pawn outside the fluid volume.
+	/// @param        ImmersionDepth        The current immersion depth of the pawn.
+	/// @returns      FVector               The location of the water line.
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Buoyancy Extended")
+	FVector FindCustomWaterLine(const FVector& LocationInWater, const FVector& LocationOutOfWater, float ImmersionDepth);
+	virtual FVector FindCustomWaterLine_Implementation(const FVector& LocationInWater, const FVector& LocationOutOfWater, float ImmersionDepth);
 
 #pragma endregion
 
