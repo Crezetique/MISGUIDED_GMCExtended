@@ -533,9 +533,27 @@ protected:
 	
 private:
 
-	
-	
+#pragma endregion
+
+
+#pragma region Buoyancy Extended
+
+public:
+
+	// GMC Override
+	virtual void UpdateImmersionDepth() override;
+
+	/// ComputeImmersionDepth() value will be returned if not overridden.
+	/// Always supersedes ComputeImmersionDepth() when called by UpdateImmersionDepth().
+	/// 
+	/// Replace with custom logic on how immerse the pawn should be. Range is from 0 (not in fluid) to 1 (fully immersed). 
+	///
+	/// @returns      float    The current immersion depth.
+	UFUNCTION(BlueprintNativeEvent, Category = "Buoyancy Extended")
+	float ComputeCustomImmersionDepth();
+	virtual float ComputeCustomImmersionDepth_Implementation();
 
 #pragma endregion
-	
+
+
 };

@@ -1496,3 +1496,19 @@ bool UGMCE_OrganicMovementCmp::IsTrajectoryDebugEnabled() const
 	return false;
 #endif	
 }
+
+
+#pragma region Buoyancy Extended
+
+// GMC Override
+void UGMCE_OrganicMovementCmp::UpdateImmersionDepth()
+{
+	CurrentImmersionDepth = CALL_NATIVE_EVENT_CONDITIONAL(bNoBlueprintEvents, this, ComputeCustomImmersionDepth);
+}
+
+float UGMCE_OrganicMovementCmp::ComputeCustomImmersionDepth_Implementation()
+{
+	return ComputeImmersionDepth();
+}
+
+#pragma endregion
