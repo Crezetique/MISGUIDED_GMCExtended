@@ -1340,14 +1340,64 @@ bool UGMCE_OrganicMovementCmp::IsTrajectoryDebugEnabled() const
 #pragma region Buoyancy Extended
 
 // GMC Override
+
 void UGMCE_OrganicMovementCmp::UpdateImmersionDepth()
 {
 	CurrentImmersionDepth = CALL_NATIVE_EVENT_CONDITIONAL(bNoBlueprintEvents, this, ComputeCustomImmersionDepth);
 }
 
+float UGMCE_OrganicMovementCmp::Swim(const FVector& LocationDelta, FHitResult& OutHit, FGMC_FloorParams& Floor, float DeltaSeconds)
+{
+	gmc_ck(BuoyantStateMinImmersion >= UE_KINDA_SMALL_NUMBER)
+
+	const FVector StartLocation = UpdatedComponent->GetComponentLocation();
+	float TimeOutOfWater = 0.f;
+
+	if (SafeMoveUpdatedComponent(LocationDelta, UpdatedComponent->GetComponentQuat(), true, OutHit))
+	{
+		UpdateImmersionDepth();
+	}
+
+	if (CurrentImmersionDepth < BuoyantStateMinImmersion)
+	{
+		// Pawn has left the water volume.
+		const FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
+		FVector WaterLine = CALL_NATIVE_EVENT_CONDITIONAL(bNoBlueprintEvents, this, FindCustomWaterLine, StartLocation, CurrentLocation, CurrentImmersionDepth);
+
+		// Adjust the water line according to the configured min immersion depth.
+		if (!FMath::IsNearlyEqual(BuoyantStateMinImmersion, 0.5f, UE_KINDA_SMALL_NUMBER))
+		{
+			const FVector TraveledInWater = WaterLine - StartLocation;
+			WaterLine = StartLocation + (1.5f - BuoyantStateMinImmersion) * TraveledInWater;
+		}
+
+		const float DesiredDistance = LocationDelta.Size();
+		if (!WaterLine.Equals(CurrentLocation) && DesiredDistance > UE_KINDA_SMALL_NUMBER)
+		{
+			const float DistanceOutOfWater = (CurrentLocation - WaterLine).Size();
+			// For the rare case that the pawn leaves the water volume from the side the water line may not have been calculated correctly.
+			if (DesiredDistance > DistanceOutOfWater)
+			{
+				TimeOutOfWater = DistanceOutOfWater / DesiredDistance;
+				// Move us back to the water line. We shouldn't hit anything on the way back because the was no collision before either.
+				MoveUpdatedComponent(WaterLine - CurrentLocation, UpdatedComponent->GetComponentQuat(), false);
+			}
+		}
+	}
+
+	return TimeOutOfWater;
+}
+
+// End GMC Override
+
 float UGMCE_OrganicMovementCmp::ComputeCustomImmersionDepth_Implementation()
 {
 	return ComputeImmersionDepth();
+}
+
+FVector UGMCE_OrganicMovementCmp::FindCustomWaterLine_Implementation(const FVector& LocationInWater, const FVector& LocationOutOfWater, float ImmersionDepth)
+{
+	return FindWaterLine(LocationInWater, LocationOutOfWater, ImmersionDepth);
 }
 
 #pragma endregion
