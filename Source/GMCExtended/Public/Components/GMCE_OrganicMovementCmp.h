@@ -689,9 +689,8 @@ public:
 	/// Replace with custom logic on how immerse the pawn should be. Range is from 0 (not in fluid) to 1 (fully immersed). 
 	///
 	/// @returns      float    The current immersion depth.
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Buoyancy Extended")
+	UFUNCTION(BlueprintNativeEvent, Category = "Buoyancy Extended")
 	float ComputeCustomImmersionDepth();
-	virtual float ComputeCustomImmersionDepth_Implementation();
 
 	/// FindWaterLine() value will be returned if not overridden.
 	/// Always supersedes FindWaterLine() when called by Swim().
@@ -703,9 +702,8 @@ public:
 	/// @param        LocationOutOfWater    The location of the pawn outside the fluid volume.
 	/// @param        ImmersionDepth        The current immersion depth of the pawn.
 	/// @returns      FVector               The location of the water line.
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Buoyancy Extended")
+	UFUNCTION(BlueprintNativeEvent, Category = "Buoyancy Extended")
 	FVector FindCustomWaterLine(const FVector& LocationInWater, const FVector& LocationOutOfWater, float ImmersionDepth);
-	virtual FVector FindCustomWaterLine_Implementation(const FVector& LocationInWater, const FVector& LocationOutOfWater, float ImmersionDepth);
 
 #pragma endregion
 
