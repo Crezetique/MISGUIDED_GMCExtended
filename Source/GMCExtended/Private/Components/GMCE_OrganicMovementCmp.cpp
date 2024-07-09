@@ -697,30 +697,15 @@ void UGMCE_OrganicMovementCmp::MontageUpdate(float DeltaSeconds)
   
   const FGMC_RootMotionExtractionSettings ExtractionSettings = GetRootMotionExtractionMetaData(MontageTracker.Montage);
   
-  PreProcessRootMotion(MontageInstance, RootMotionParams, ExtractionSettings, DeltaSeconds);
+  ProcessRootMotionMetaData(MontageInstance, RootMotionParams, ExtractionSettings, DeltaSeconds);
   
   if (RootMotionParams.bHasRootMotion)
   {
     bHasRootMotion = true;
   
-    // The root motion translation can be scaled by the user.
-    RootMotionParams.ScaleRootMotionTranslation(GetAnimRootMotionTranslationScale());
-  
-    // Root motion calculations from motion warping
-  	FTransform PreProcessedRootMotion;
-  	if (ProcessRootMotionPreConvertToWorld.IsBound())
-  	{
-  		PreProcessedRootMotion = ProcessRootMotionPreConvertToWorld.Execute(RootMotionParams.GetRootMotionTransform(), this, DeltaSeconds);
-  	}
-  	else
-  	{
-  		PreProcessedRootMotion = RootMotionParams.GetRootMotionTransform();
-  	}
-    const FTransform WorldSpaceRootMotionTransform = SkeletalMesh->ConvertLocalRootMotionToWorld(PreProcessedRootMotion);
-  
-    // Save the root motion transform in world space.
-    RootMotionParams.Set(WorldSpaceRootMotionTransform);
-  
+    // Processing of the root motion parameters before the final velocity is calculated.
+    PreProcessRootMotion(MontageInstance, RootMotionParams, DeltaSeconds);
+
     // Calculate the root motion velocity from the world space root motion translation.
     CalculateAnimRootMotionVelocity(ExtractionSettings, DeltaSeconds);
   
@@ -736,6 +721,31 @@ void UGMCE_OrganicMovementCmp::MontageUpdate(float DeltaSeconds)
   gmc_ck(!MontageTracker.bStartedNewMontage)
   gmc_ck(!MontageTracker.bMontageEnded)
   gmc_ck(!MontageTracker.bInterruptedPreviousMontage)	
+}
+
+void UGMCE_OrganicMovementCmp::PreProcessRootMotion(
+  const FGMC_AnimMontageInstance& MontageInstance,
+  FRootMotionMovementParams& InOutRootMotionParams,
+  float DeltaSeconds
+)
+{
+  // The root motion translation can be scaled by the user.
+  InOutRootMotionParams.ScaleRootMotionTranslation(GetAnimRootMotionTranslationScale());
+
+	// Root motion calculations from motion warping
+	FTransform PreProcessedRootMotion;
+	if (ProcessRootMotionPreConvertToWorld.IsBound())
+	{
+		PreProcessedRootMotion = ProcessRootMotionPreConvertToWorld.Execute(InOutRootMotionParams.GetRootMotionTransform(), this, DeltaSeconds);
+	}
+	else
+	{
+		PreProcessedRootMotion = InOutRootMotionParams.GetRootMotionTransform();
+	}
+	const FTransform WorldSpaceRootMotionTransform = SkeletalMesh->ConvertLocalRootMotionToWorld(PreProcessedRootMotion);
+
+	// Save the root motion transform in world space.
+	InOutRootMotionParams.Set(WorldSpaceRootMotionTransform);
 }
 
 void UGMCE_OrganicMovementCmp::OnSyncDataApplied_Implementation(const FGMC_PawnState& State, EGMC_NetContext Context)
